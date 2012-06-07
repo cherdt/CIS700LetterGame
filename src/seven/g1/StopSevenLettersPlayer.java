@@ -16,11 +16,11 @@ import seven.ui.SecretState;
 import seven.g1.Bid;
 import seven.g1.Opponent;
 
-public class FrequencyPlayer implements Player {
+public class StopSevenLettersPlayer implements Player {
 
 	
 	/*
-	 * This player bids randomly.
+	 * This player bids high to stop other players from getting 7 letters
 	 */
 	
 	// an array of words to be used for making decisions
@@ -110,6 +110,9 @@ public class FrequencyPlayer implements Player {
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
 		List<Character> list = new ArrayList<Character>(currentLetters);
 
+		// Keep track of how many players have exactly 6 letters
+		int sixLetterCount = 0;
+		
 		// Defense factor is to prevent other players from bidding high
 		// but getting letters cheaply
 		int defenseFactor = 0;
@@ -127,26 +130,35 @@ public class FrequencyPlayer implements Player {
 		// Iterate over bidding rounds
 		for ( PlayerBids round : playerBidList ) {
 			Letter targetLetter = round.getTargetLetter();
+			int highBid = 0;
+			int highBidder = -1;
 			id = 0;
-			for ( int bid : round.getBidvalues() ) {
+			for ( int bid : round.getBidvalues() ) {				
 				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
+				if ( bid > highBid ) {
+					highBid = bid;
+					highBidder = id;
+				}
 				id++;
 			}
+			opponents.get(highBidder).addLetter(targetLetter);
 		}
+		
+		
 		// Iterate over opponents
 		for ( Opponent opponent : opponents ) {
-			// Tried 10 at first, but Random Player slips under it
-			if ( opponent.getAverageOverValue() > 5 ) {
-				defenseFactor = 7;
-				break;
+			if ( opponent.getLetterCount() == 6 ) {
+				sixLetterCount++;
 			}
 		}
-		logger.trace("Defense factor: " + defenseFactor);
 		
-		
-		if (list.size() < 3 && bidLetter.getValue() < 4)
+		// We're trying to stop users from getting 7 letters!
+		// How much are we willing to risk? In a 2-player game,
+		// it makes sense to spend 20 to keep the opponent from
+		// getting 50+. But with numerous players--Zero Player could win
+		if ( sixLetterCount > 0 )
 		{
-			return bidLetter.getValue()+ (int)Math.round(Math.random()*2) + defenseFactor;
+			return 20;
 		}
 		
 		double st = stats.getStatistics(bidLetter.getCharacter());

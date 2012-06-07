@@ -3,9 +3,12 @@ package seven.g1;
 import java.util.ArrayList;
 import java.util.List;
 
+import seven.ui.Letter;
+
 public class Opponent 
 {
 	private List<Bid> bids = new ArrayList<Bid>();
+	private List<Letter> letters = new ArrayList<Letter>();
 	private int id;
 	
 	public List<Bid> getBids() {
@@ -16,6 +19,14 @@ public class Opponent
 	}
 	public void addBid( Bid bid ) {
 		this.bids.add(bid);
+	}
+	
+	public void addLetter( Letter letter ) {
+		this.letters.add(letter);
+	}
+	
+	public int getLetterCount() {
+		return this.letters.size();
 	}
 	
 	public int getId() {

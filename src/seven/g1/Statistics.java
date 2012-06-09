@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import seven.ui.Letter;
 import seven.ui.SecretState;
 
@@ -17,7 +19,7 @@ public class Statistics
 	//public Map<Integer, Opponents> oponnents
 	
 	public List<Word> availableWords;
-	
+	private Logger logger = Logger.getLogger(this.getClass());
 	public List<Character> chars;
 	
 	public Statistics(SecretState state, List<Word> words)
@@ -25,34 +27,34 @@ public class Statistics
 		chars = new ArrayList<Character>();
 		for (Letter l : state.getSecretLetters())
 		{
-			chars.add(Character.toLowerCase(l.getCharacter()));
+			chars.add(l.getCharacter());
 		}this.availableWords = words;
-		available.put('a', new LetterObject('a', 1, 9));
-		available.put('b', new LetterObject('b', 3,2));
-		available.put('c', new LetterObject('c', 3,2));
-		available.put('d', new LetterObject('d', 2,4));
-		available.put('e', new LetterObject('e', 1,12));
-		available.put('f', new LetterObject('f', 4,2));
-		available.put('g', new LetterObject('g', 2,3));
-		available.put('h', new LetterObject('h', 4,2));
-		available.put('i', new LetterObject('i', 1,9));
-		available.put('j', new LetterObject('j', 8,1));
-		available.put('k', new LetterObject('k', 5,1));
-		available.put('l', new LetterObject('l', 1,4));
-		available.put('m', new LetterObject('m', 3,2));
-		available.put('n', new LetterObject('n', 1,6));
-		available.put('o', new LetterObject('o', 1,8));
-		available.put('p', new LetterObject('p', 3,2));
-		available.put('q', new LetterObject('q', 10,1));
-		available.put('r', new LetterObject('r', 1,6));
-		available.put('s', new LetterObject('s', 1,4));
-		available.put('t', new LetterObject('t', 1,6));
-		available.put('u', new LetterObject('u', 1,4));
-		available.put('v', new LetterObject('v', 4,2));
-		available.put('w', new LetterObject('w', 4,2));
-		available.put('x', new LetterObject('x', 8,1));
-		available.put('y', new LetterObject('y', 4,2));
-		available.put('z', new LetterObject('z', 10,1));
+		available.put('A', new LetterObject('A', 1, 9));
+		available.put('B', new LetterObject('B', 3,2));
+		available.put('C', new LetterObject('C', 3,2));
+		available.put('D', new LetterObject('D', 2,4));
+		available.put('E', new LetterObject('E', 1,12));
+		available.put('F', new LetterObject('F', 4,2));
+		available.put('G', new LetterObject('G', 2,3));
+		available.put('H', new LetterObject('H', 4,2));
+		available.put('I', new LetterObject('I', 1,9));
+		available.put('J', new LetterObject('J', 8,1));
+		available.put('K', new LetterObject('K', 5,1));
+		available.put('L', new LetterObject('L', 1,4));
+		available.put('M', new LetterObject('M', 3,2));
+		available.put('N', new LetterObject('N', 1,6));
+		available.put('O', new LetterObject('O', 1,8));
+		available.put('P', new LetterObject('P', 3,2));
+		available.put('Q', new LetterObject('Q', 10,1));
+		available.put('R', new LetterObject('R', 1,6));
+		available.put('S', new LetterObject('S', 1,4));
+		available.put('T', new LetterObject('T', 1,6));
+		available.put('U', new LetterObject('U', 1,4));
+		available.put('V', new LetterObject('V', 4,2));
+		available.put('W', new LetterObject('W', 4,2));
+		available.put('X', new LetterObject('X', 8,1));
+		available.put('Y', new LetterObject('Y', 4,2));
+		available.put('Z', new LetterObject('Z', 10,1));
 		updateCharStats('0');
 		
 		for (Letter l : state.getSecretLetters())
@@ -63,7 +65,7 @@ public class Statistics
 	
 	public void removeChar(Character c)
 	{
-		LetterObject o = available.get(Character.toLowerCase(c));
+		LetterObject o = available.get(c);
 		o.setCount(o.getCount() - 1);
 	}
 	
@@ -79,14 +81,25 @@ public class Statistics
 		if (c != '0')
 		{
 			chars.add(c);
-			Word w = new Word(b.toString().toUpperCase());
+			Word w = new Word(b.toString());
+
+			// Create list/word out of chars still available
+			StringBuilder stillAvail = new StringBuilder(100);
+			for ( LetterObject o : available.values() ) {
+				if ( o.getCount() > 0 ) {
+					for ( int i = 0; i<o.getCount(); i++) {
+						stillAvail.append(o.getCharacter());
+					}
+				}
+			}
+			Word stillAvailLetters = new Word(stillAvail.toString());
 			
 			// Remove all words that no longer apply.
 			Iterator<Word> words = availableWords.iterator();
 			while (words.hasNext())
 			{
 				Word word = words.next();
-				if (!word.contains(w))
+				if (!word.contains(w) || !stillAvailLetters.contains(word) )
 				{
 					words.remove();
 				}
@@ -96,29 +109,40 @@ public class Statistics
 		for (Character chars : available.keySet())
 		{
 			b.append(chars);
-			LetterObject o = available.get(Character.toLowerCase(chars));
+			LetterObject o = available.get(chars);
 			o.setStats(0);
-			Word w = new Word(b.toString().toUpperCase());
+			Word w = new Word(b.toString());
 			for (Word word : availableWords)
 			{
 				if (!word.contains(w))
 				{
 					o.setStats(o.getStats()+1);
 				}
+				
 			}
+			b.deleteCharAt(b.length()-1);
 		}
 		// create a percentage for the results.
 		for (Character chars : available.keySet())
 		{
-			LetterObject o = available.get(Character.toLowerCase(chars));
-			o.setStats(o.getStats()/availableWords.size());
+			LetterObject o = available.get(chars);
+			if ( availableWords.size() == 0 ) {
+				logger.trace("Char " + o.getCharacter() + " loses 100%");
+				o.setStats(1);
+			} else {
+				o.setStats( o.getStats()/ (double) availableWords.size());
+			}
+			
+			logger.trace(o.getCharacter() + ":" + o.getStats());
+			
 		}
+		
 		
 	}
 	
 	public double getStatistics(char c)
 	{
-		return available.get(Character.toLowerCase(c)).getStats();
+		return available.get(c).getStats();
 	}
 	/*
 	 * switch(Character.toLowerCase(bidLetter.getCharacter()))

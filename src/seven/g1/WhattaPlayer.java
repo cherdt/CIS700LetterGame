@@ -171,11 +171,19 @@ public class WhattaPlayer implements Player {
 		if (currentLetters.size() < 3 && bidLetter.getValue() < 4)
 		{
 			return bidLetter.getValue()+ (int)Math.round(Math.random()*3) + defenseFactor;
+		} else if (currentLetters.size() < 3) {
+			return bidLetter.getValue();
 		}
 		
 		double st = stats.getStatistics(bidLetter.getCharacter());
-		
-		return (int)Math.round(3d * (1- st)) + bidLetter.getValue() + defenseFactor;
+
+		int statFactor = (int)Math.round(3d * (1- st));
+		logger.trace("Stat Factor: " + statFactor + " (st: " + st + ")");
+		// Don't bid on something that won't help
+		if ( st == 1 ) {
+			return 1;
+		}
+		return statFactor + bidLetter.getValue() + defenseFactor;
 	}
 
 	
@@ -189,6 +197,7 @@ public class WhattaPlayer implements Player {
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());
+    		stats.updateCharStats(letter.getCharacter());
     	}
     	else {
     		//logger.trace("My ID is " + myID + " and I lost the bid for " + letter);

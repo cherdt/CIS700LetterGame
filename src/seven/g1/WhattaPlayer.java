@@ -16,7 +16,7 @@ import seven.ui.SecretState;
 import seven.g1.Bid;
 import seven.g1.Opponent;
 
-public class FrequencyPlayer implements Player {
+public class WhattaPlayer implements Player {
 
 	
 	/*
@@ -53,10 +53,13 @@ public class FrequencyPlayer implements Player {
 			while (null != (line = r.readLine())) {
 
 				String[] split = line.split(","); 
-				if (split.length==2 && split[1].trim().length() == 7)
+				if ( split.length==2 )
 				{
 					wtmp.add(new Word(split[1].trim()));
-					seven.add(new Word(split[1].trim()));
+					// Add 7-letter words to a special list
+					if ( split[1].trim().length() == 7 ) {
+						seven.add(new Word(split[1].trim()));
+					}
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -111,9 +114,7 @@ public class FrequencyPlayer implements Player {
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
 		
-
-		
-		if (currentLetters.size() >= 7 ) {
+		if ( getWord().length() >= 7 ) {
 			List<Character> list = new ArrayList<Character>(currentLetters);
 			// Add new letter
 			list.add(bidLetter.getCharacter());
@@ -207,12 +208,16 @@ public class FrequencyPlayer implements Player {
 		char c[] = new char[letters.size()];
 		for (int i = 0; i < c.length; i++) {
 			c[i] = letters.get(i);
+			logger.trace("Letter " + c[i] + " is in our bag");
 		}
 		String s = new String(c);
 		Word ourletters = new Word(s);
 		Word bestword = new Word("");
+		logger.trace("Ourletters: " + ourletters.word);
 		for (Word w : wordlist) {
 			if (ourletters.contains(w)) {
+				logger.trace("Found word: " + w.word + " with score " + w.score);
+				logger.trace("Compare to best word score: " + bestword.score);
 				if (w.score > bestword.score) {
 					bestword = w;
 				}

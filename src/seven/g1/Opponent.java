@@ -19,6 +19,9 @@ public class Opponent
 	}
 	public void addBid( Bid bid ) {
 		this.bids.add(bid);
+		if ( this.bids.size() > 3 ) {
+			this.bids.remove(0);
+		}
 	}
 	
 	public void addLetter( Letter letter ) {

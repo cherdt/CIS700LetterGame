@@ -1,5 +1,7 @@
 package seven.g1;
 
+import org.apache.log4j.Logger;
+
 import seven.ui.LetterGame;
 
 public class Word {
@@ -8,18 +10,38 @@ public class Word {
 	public String word;
 	public int length;
 	public int score = 0;
+	// for logging
+	private Logger logger = Logger.getLogger(this.getClass());
+
 	//countkeep implementation: the value is the frequency of the letter in the word, and the index is the letter ex A is 0
 	public int[] countKeep= new int[LETTERS];
 
 	public Word(String s){
-		word=s;
+		word=s.toUpperCase();
 		length=s.length();
 		for(int i = 0; i<s.length();i++){
-			char c = s.charAt(i);
+			char c = word.charAt(i);
 			score += LetterGame.letterScore(c);
 			int index= Integer.valueOf(c);
 			index -= Integer.valueOf('A');
 			countKeep[index]++;
+		}
+
+		/*
+		int charOffset = Integer.valueOf('A');
+		for (char c = 'A'; c <= 'Z'; c++) {
+			int index= Integer.valueOf(c) - charOffset;
+			for (int i = 0; i < countKeep[index]; i++) {
+				score += LetterGame.letterScore(c);
+				b.append(c);
+				length++;
+			}
+		}
+		 */
+		
+		if (length == 7)
+		{
+			score+=50;
 		}
 	}
 

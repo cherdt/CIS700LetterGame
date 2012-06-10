@@ -3,13 +3,11 @@ package seven.g1;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.io.*;
 
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
@@ -35,9 +33,6 @@ public class FrequencyPlayer implements Player {
 	
 	// unique ID
 	private int myID;
-	
-	// for generating random numbers
-	private Random random = new Random();
 	
 	private Statistics stats;
 	/* This code initializes the word list */

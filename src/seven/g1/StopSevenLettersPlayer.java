@@ -9,7 +9,6 @@ import java.io.*;
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
@@ -35,9 +34,6 @@ public class StopSevenLettersPlayer implements Player {
 	
 	// unique ID
 	private int myID;
-	
-	// for generating random numbers
-	private Random random = new Random();
 	
 	private Statistics stats;
 	/* This code initializes the word list */
@@ -108,7 +104,6 @@ public class StopSevenLettersPlayer implements Player {
 	 * secretState = your secret state (which includes the score)
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
-		List<Character> list = new ArrayList<Character>(currentLetters);
 
 		// Keep track of how many players have exactly 6 letters
 		int sixLetterCount = 0;

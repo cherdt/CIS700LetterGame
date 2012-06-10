@@ -3,13 +3,10 @@ package seven.g1;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.io.*;
 
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
@@ -33,13 +30,12 @@ public class WhattaPlayer extends G1Player implements Player {
 	// unique ID
 	private int myID;
 	
-	// for generating random numbers
-	private Random random = new Random();
-	
 	private Statistics stats;
 
-
-	
+	private BidStrategy fewLettersStrategy = new FewLettersStrategy();
+	private BidStrategy improveSevenStrategy = new ImproveSevenStrategy();
+	private BidStrategy mustGetSeventhStrategy = new MustGetSeventhStrategy();
+	private BidStrategy statsStrategy = new StatsStrategy();
     /*
      * This is called once at the beginning of a Game.
      * The id is what the game considers to be your unique identifier
@@ -86,28 +82,28 @@ public class WhattaPlayer extends G1Player implements Player {
 
 		// Default strategy is to play the statistics
 		// TODO if we happen to pick up Z/X/Q etc., the player basically gives up all hope. Why not ignore it and gun for an 8th letter?
-		BidStrategy strategy = new StatsStrategy(bidLetter, stats, defenseFactor);
+		BidStrategy strategy = statsStrategy;
 		logger.trace("Using Stats Strategy (default)");
 
 		// If we already have a 7 letter word...
 		if ( getWord().length() >= 7 ) {
-			strategy = new ImproveSevenStrategy( bidLetter, this.currentLetters );
+			strategy = improveSevenStrategy;
 			logger.trace("Switching to ImproveSevenStrategy");
 		} else {
 			// If we have 6 letters and desperately want a seventh...
 			if ( currentLetters.size() >= 6 ) {
-				strategy = new MustGetSeventhStrategy( bidLetter, this.currentLetters, defenseFactor );
+				strategy = mustGetSeventhStrategy;
 				logger.trace("Switching to MustGetSeventhStrategy");
 			}
 			
 			// If we only have a few letters...
 			if (currentLetters.size() < 3 )	{
-				strategy = new FewLettersStrategy(bidLetter, defenseFactor);
+				strategy = fewLettersStrategy;
 				logger.trace("Switching to FewLettersStrategy");
 			}
 		}
 		
-		return strategy.getBid();
+		return strategy.getBid(bidLetter, currentLetters, stats, defenseFactor);
 	}
 
 

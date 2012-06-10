@@ -1,21 +1,14 @@
 package seven.g1;
 
+import java.util.ArrayList;
+
 import seven.ui.Letter;
 
 public class StatsStrategy implements BidStrategy {
-
-	private Letter bidLetter;
-	private Statistics stats;
-	private int defenseFactor;
-
-	public StatsStrategy( Letter bidLetter, Statistics stats, int defenseFactor ) {
-		this.bidLetter = bidLetter;
-		this.stats = stats;
-		this.defenseFactor = defenseFactor;
-	}
 	
 	@Override
-	public int getBid() {
+	public int getBid( Letter bidLetter, ArrayList<Character> currentLetters, 
+			Statistics stats, int defenseFactor ) {
 		double st = stats.getStatistics(bidLetter.getCharacter());
 		
 		// TODO update this calculation. We might want a negative factor for letters than currently produce stat factor zero?

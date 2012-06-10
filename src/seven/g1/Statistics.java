@@ -133,7 +133,7 @@ public class Statistics
 				o.setStats( o.getStats()/ (double) availableWords.size());
 			}
 			
-			logger.trace(o.getCharacter() + ":" + o.getStats());
+			//logger.trace(o.getCharacter() + ":" + o.getStats());
 			
 		}
 		

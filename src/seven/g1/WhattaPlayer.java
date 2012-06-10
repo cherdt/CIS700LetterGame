@@ -16,17 +16,14 @@ import seven.ui.SecretState;
 import seven.g1.Bid;
 import seven.g1.Opponent;
 
-public class WhattaPlayer implements Player {
+public class WhattaPlayer extends G1Player implements Player {
 
 	
 	/*
-	 * This player bids randomly.
+	 * This player uses different bidding strategies based on the game state.
 	 */
 	
-	// an array of words to be used for making decisions
-	private static final Word[] wordlist;
 
-	private static final Word[] sevenLetterWords;
 	// for logging
 	private Logger logger = Logger.getLogger(this.getClass());
 
@@ -40,38 +37,7 @@ public class WhattaPlayer implements Player {
 	private Random random = new Random();
 	
 	private Statistics stats;
-	/* This code initializes the word list */
-	static {
-		BufferedReader r;
-		String line = null;
-		ArrayList<Word> wtmp = new ArrayList<Word>(55000);
-		ArrayList<Word> seven = new ArrayList<Word>(27000);
-		try {
-			// you can use textFiles/dictionary.txt if you want the whole list
-			// or you can use super-small-wordlist.txt
-			r = new BufferedReader(new FileReader("textFiles/dictionary.txt"));
-			while (null != (line = r.readLine())) {
 
-				String[] split = line.split(","); 
-				if ( split.length==2 )
-				{
-					wtmp.add(new Word(split[1].trim()));
-					// Add 7-letter words to a special list
-					if ( split[1].trim().length() == 7 ) {
-						seven.add(new Word(split[1].trim()));
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		wordlist = wtmp.toArray(new Word[wtmp.size()]);
-		sevenLetterWords = seven.toArray(new Word[seven.size()]);
-	}
 
 	
     /*
@@ -92,7 +58,7 @@ public class WhattaPlayer implements Player {
 	 */
 	public void newRound(SecretState secretState, int current_round) {
 		ArrayList<Word> word = new ArrayList<Word>();
-		Collections.addAll(word, sevenLetterWords);
+		Collections.addAll(word, G1Player.sevenLetterWords);
 		stats = new Statistics(secretState, word);
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
@@ -113,31 +79,42 @@ public class WhattaPlayer implements Player {
 	 * secretState = your secret state (which includes the score)
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
-		
-		if ( getWord().length() >= 7 ) {
-			List<Character> list = new ArrayList<Character>(currentLetters);
-			// Add new letter
-			list.add(bidLetter.getCharacter());
-			// See if bid letter will increase our score
-			int beforeScore = getBestScore(currentLetters);
-			int afterScore = getBestScore(list);
-			int benefit = 0;
-			if ( afterScore > beforeScore ) {
-				benefit = afterScore - beforeScore;
-			}
-			if ( bidLetter.getValue() < benefit ) {
-				return benefit-1;
-			} else {
-				return 1;
-			}			
-		}
-		
 
 		// Defense factor is to prevent other players from bidding high
 		// but getting letters cheaply
+		int defenseFactor = getDefenseFactor(playerBidList,playerList, secretState.getSecretLetters().size() );
+
+		// Default strategy is to play the statistics
+		BidStrategy strategy = new StatsStrategy(bidLetter, stats, defenseFactor);
+		logger.trace("Using Stats Strategy (default)");
+
+		// If we already have a 7 letter word...
+		if ( getWord().length() >= 7 ) {
+			strategy = new ImproveSevenStrategy( bidLetter, this.currentLetters );
+			logger.trace("Switching to ImproveSevenStrategy");
+
+		}
+
+		// If we only have a few letters...
+		if (currentLetters.size() < 3 )	{
+			strategy = new FewLettersStrategy(bidLetter, defenseFactor);
+			logger.trace("Switching to FewLettersStrategy");
+		}
+		
+		return strategy.getBid();
+	}
+
+
+	/*
+	 * Defense factor is to prevent other players from bidding high
+	 * but getting letters cheaply
+	 */
+	private int getDefenseFactor( ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, int numOfSecretLetters ) {
+		
 		int defenseFactor = 0;
-		// Current idea -- if any opponent is bidding, on average, 10 greater
-		// than the letter value -- increase Defense Factor to 7
+		int overbidTolerance = 5;
+		// Current idea -- if any opponent is bidding, on average, greater than the
+		// letter value + the overbid tolerance, increase the Defense Factor to 50/(7-# of secret letters)
 		List<Opponent> opponents = new ArrayList<Opponent>(playerList.size());
 		int id = 0;
 		// Initialize opponents
@@ -160,32 +137,17 @@ public class WhattaPlayer implements Player {
 		for ( Opponent opponent : opponents ) {
 			// Tried 10 at first, but Random Player slips under it
 			// && opponent.getBids().size() >= 3
-			if ( opponent.getAverageOverValue() > 5 ) {
-				defenseFactor = 5 + (int)Math.round(Math.random()*4)-2;
+			if ( opponent.getAverageOverValue() > overbidTolerance ) {
+				// A random +/-2 to make less unpredictable
+				defenseFactor = (7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
 				break;
 			}
 		}
 		logger.trace("Defense factor: " + defenseFactor);
-		
-		
-		if (currentLetters.size() < 3 && bidLetter.getValue() < 4)
-		{
-			return bidLetter.getValue()+ (int)Math.round(Math.random()*3) + defenseFactor;
-		} else if (currentLetters.size() < 3) {
-			return bidLetter.getValue();
-		}
-		
-		double st = stats.getStatistics(bidLetter.getCharacter());
 
-		int statFactor = (int)Math.round(3d * (1- st));
-		logger.trace("Stat Factor: " + statFactor + " (st: " + st + ")");
-		// Don't bid on something that won't help
-		if ( st == 1 ) {
-			return 1;
-		}
-		return statFactor + bidLetter.getValue() + defenseFactor;
+		return defenseFactor;
 	}
-
+	
 	
 	/*
 	 * This method is called after a bid. It indicates whether or not the player
@@ -236,27 +198,6 @@ public class WhattaPlayer implements Player {
 		logger.trace("My ID is " + myID + " and my word is " + bestword.word);
 		
 		return bestword.word;
-	}
-	
-	private int getBestScore(List<Character> letters) {
-		
-		char c[] = new char[letters.size()];
-		for (int i = 0; i < c.length; i++) {
-			c[i] = letters.get(i);
-		}
-		String s = new String(c);
-		Word ourletters = new Word(s);
-		Word bestword = new Word("");
-		for (Word w : wordlist) {
-			if (ourletters.contains(w)) {
-				if (w.score > bestword.score) {
-					bestword = w;
-				}
-
-			}
-		}
-		
-		return bestword.score;
 	}
 	
 	/*

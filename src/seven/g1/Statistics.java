@@ -21,9 +21,18 @@ public class Statistics
 	public List<Word> availableWords;
 	private Logger logger = Logger.getLogger(this.getClass());
 	public List<Character> chars;
+	private boolean useIgnoreChars = true;
+	private final char[] ignoreChars = "JKQXZ".toCharArray(); // There are times we might want to ignore these?
+	private List<Character> ignoreList;
 	
 	public Statistics(SecretState state, List<Word> words)
-	{
+	{		
+		
+		ignoreList = new ArrayList<Character>();
+		for ( int i = 0; i < ignoreChars.length; i++ ) {
+			ignoreList.add(ignoreChars[i]);
+		}
+		
 		chars = new ArrayList<Character>();
 		for (Letter l : state.getSecretLetters())
 		{
@@ -76,7 +85,9 @@ public class Statistics
 		StringBuilder b = new StringBuilder();
 		for (Character ch : chars)
 		{
-			b.append(ch);
+			if ( !useIgnoreChars || !ignoreList.contains(ch) ) {
+				b.append(ch);
+			}
 		}
 		// Add a new character if it exists.
 		if (c != '0')
@@ -127,11 +138,21 @@ public class Statistics
 		for (Character chars : available.keySet())
 		{
 			LetterObject o = available.get(chars);
+			logger.trace(o.getCharacter() + ":" + o.getStats() + " words eliminated");
+			int allEliminatedCount = 0;
 			if ( availableWords.size() == 0 ) {
 				logger.trace("Char " + o.getCharacter() + " loses 100%");
+				allEliminatedCount++;
 				o.setStats(1);
 			} else {
 				o.setStats( o.getStats()/ (double) availableWords.size());
+			}
+			
+			if ( allEliminatedCount >= 26 ) {
+				// TODO: what if all possibilities are eliminated
+				// We need to reconsider--there should be a fallback
+				// If we ignore a char, how many words will it bring back (i.e. make possible)?
+				logger.trace("All characters have been eliminated!");
 			}
 			
 			logger.trace(o.getCharacter() + ":" + o.getStats());

@@ -141,12 +141,14 @@ public class WhattaPlayer extends G1Player implements Player {
 		}
 		// Iterate over opponents
 		for ( Opponent opponent : opponents ) {
-			// Tried 10 at first, but Random Player slips under it
-			// && opponent.getBids().size() >= 3
-			if ( opponent.getAverageOverValue() > overbidTolerance ) {
-				// A random +/-2 to make less unpredictable
-				defenseFactor = 50/(7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
-				break;
+			if ( opponent.getId() != this.myID ) {
+				// Tried 10 at first, but Random Player slips under it
+				// && opponent.getBids().size() >= 3
+				if ( opponent.getAverageOverValue() > overbidTolerance ) {
+					// A random +/-2 to make less unpredictable
+					defenseFactor = 50/(7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
+					break;
+				}
 			}
 		}
 		logger.trace("Defense factor: " + defenseFactor);

@@ -33,7 +33,7 @@ public class ImproveSevenStrategy implements BidStrategy {
 		if ( bidLetter.getValue() < benefit ) {
 			return benefit-1;
 		} else {
-			return 1;
+			return 2;
 		}	
 	}
 

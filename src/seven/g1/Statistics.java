@@ -28,7 +28,8 @@ public class Statistics
 		for (Letter l : state.getSecretLetters())
 		{
 			chars.add(l.getCharacter());
-		}this.availableWords = words;
+		}
+		this.availableWords = words;
 		available.put('A', new LetterObject('A', 1, 9));
 		available.put('B', new LetterObject('B', 3,2));
 		available.put('C', new LetterObject('C', 3,2));
@@ -133,7 +134,7 @@ public class Statistics
 				o.setStats( o.getStats()/ (double) availableWords.size());
 			}
 			
-			//logger.trace(o.getCharacter() + ":" + o.getStats());
+			logger.trace(o.getCharacter() + ":" + o.getStats());
 			
 		}
 		

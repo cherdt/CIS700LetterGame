@@ -85,6 +85,7 @@ public class WhattaPlayer extends G1Player implements Player {
 		int defenseFactor = getDefenseFactor(playerBidList,playerList, secretState.getSecretLetters().size() );
 
 		// Default strategy is to play the statistics
+		// TODO if we happen to pick up Z/X/Q etc., the player basically gives up all hope. Why not ignore it and gun for an 8th letter?
 		BidStrategy strategy = new StatsStrategy(bidLetter, stats, defenseFactor);
 		logger.trace("Using Stats Strategy (default)");
 
@@ -92,13 +93,18 @@ public class WhattaPlayer extends G1Player implements Player {
 		if ( getWord().length() >= 7 ) {
 			strategy = new ImproveSevenStrategy( bidLetter, this.currentLetters );
 			logger.trace("Switching to ImproveSevenStrategy");
-
-		}
-
-		// If we only have a few letters...
-		if (currentLetters.size() < 3 )	{
-			strategy = new FewLettersStrategy(bidLetter, defenseFactor);
-			logger.trace("Switching to FewLettersStrategy");
+		} else {
+			// If we have 6 letters and desperately want a seventh...
+			if ( currentLetters.size() >= 6 ) {
+				strategy = new MustGetSeventhStrategy( bidLetter, this.currentLetters, defenseFactor );
+				logger.trace("Switching to MustGetSeventhStrategy");
+			}
+			
+			// If we only have a few letters...
+			if (currentLetters.size() < 3 )	{
+				strategy = new FewLettersStrategy(bidLetter, defenseFactor);
+				logger.trace("Switching to FewLettersStrategy");
+			}
 		}
 		
 		return strategy.getBid();
@@ -139,7 +145,7 @@ public class WhattaPlayer extends G1Player implements Player {
 			// && opponent.getBids().size() >= 3
 			if ( opponent.getAverageOverValue() > overbidTolerance ) {
 				// A random +/-2 to make less unpredictable
-				defenseFactor = (7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
+				defenseFactor = 50/(7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
 				break;
 			}
 		}

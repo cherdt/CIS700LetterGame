@@ -24,7 +24,6 @@ public class ImproveSevenStrategy implements BidStrategy {
 		// Add new letter
 		list.add(this.bidLetter.getCharacter());
 		// See if bid letter will increase our score
-		// TODO the reference to the static method should be in a superclass of WhattaPlayer!
 		int beforeScore = G1Player.getBestScore(currentLetters);
 		int afterScore = G1Player.getBestScore(list);
 		int benefit = 0;

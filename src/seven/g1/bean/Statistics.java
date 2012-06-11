@@ -1,4 +1,4 @@
-package seven.g1;
+package seven.g1.bean;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
+import seven.ui.PlayerBids;
 import seven.ui.SecretState;
 
 public class Statistics
@@ -18,16 +19,19 @@ public class Statistics
 	
 	//public Map<Integer, Opponents> oponnents
 	
-	public List<Word> availableWords;
+	private List<Word> availableWords;
 	private Logger logger = Logger.getLogger(this.getClass());
-	public List<Character> chars;
+	private List<Character> chars;
 	private boolean useIgnoreChars = true;
 	private final char[] ignoreChars = "JKQXZ".toCharArray(); // There are times we might want to ignore these?
 	private List<Character> ignoreList;
-	
-	public Statistics(SecretState state, List<Word> words)
+	private int myID;
+	List<Opponent> opponents;
+	private int secretLetterCount;
+	public Statistics(SecretState state, List<Word> words, int myID)
 	{		
-		
+		secretLetterCount = state.getSecretLetters().size();
+		this.myID = myID;
 		ignoreList = new ArrayList<Character>();
 		for ( int i = 0; i < ignoreChars.length; i++ ) {
 			ignoreList.add(ignoreChars[i]);
@@ -161,11 +165,85 @@ public class Statistics
 		
 		
 	}
+	/**
+	 * Add the latest round to the opponent statistics.
+	 * 
+	 * @param targetLetter
+	 * @param round
+	 */
+	public void updateBids(Letter targetLetter, PlayerBids round)
+	{
+		int id =0;
+		// Iterate over bidding rounds
+		for ( int bid : round.getBidvalues() ) {
+			if (id != myID) {
+				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
+				id++;
+			}
+		}
+	}
 	
+	/**
+	 * Create the list of players.  Only do this once.
+	 * 
+	 * @param playerList
+	 */
+	public void initPlayers(ArrayList<String> playerList)
+	{
+		if (opponents == null)
+		{
+			opponents = new ArrayList<Opponent>();
+			for (int i=0;i<playerList.size();i++)
+			{
+				// Do not add yourself.
+				if (i != myID)
+				{
+					Opponent o = new Opponent();
+					o.setId(i);
+					opponents.add(o);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Get the statistical value for the provided character.
+	 * 
+	 * @param c
+	 * @return
+	 */
 	public double getStatistics(char c)
 	{
 		return available.get(c).getStats();
 	}
+	
+	/**
+	 * Get the list of opponents.
+	 * 
+	 */
+	public List<Opponent> getOpponents()
+	{
+		return opponents;
+	}
+	
+	/**
+	 * Returns the amount of turns left in the round.
+	 * 
+	 */
+	public int turnsLeft()
+	{
+		int playerCount = this.opponents.size()+1;
+		int letters = 8 - secretLetterCount;
+		
+		int turns = 0;
+		if (opponents.size() > 0)
+		{
+			turns = opponents.get(0).getBids().size();
+		}
+		
+		return playerCount * letters - turns;
+	}
+	
 	/*
 	 * switch(Character.toLowerCase(bidLetter.getCharacter()))
 		{

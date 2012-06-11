@@ -1,4 +1,4 @@
-package seven.g1;
+package seven.g1.bean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,7 @@ import seven.ui.Letter;
 
 public class Opponent 
 {
+	private static final int BIDCOUNT = 3;
 	private List<Bid> bids = new ArrayList<Bid>();
 	private List<Letter> letters = new ArrayList<Letter>();
 	private int id;
@@ -19,9 +20,6 @@ public class Opponent
 	}
 	public void addBid( Bid bid ) {
 		this.bids.add(bid);
-		if ( this.bids.size() > 3 ) {
-			this.bids.remove(0);
-		}
 	}
 	
 	public void addLetter( Letter letter ) {
@@ -42,14 +40,17 @@ public class Opponent
 	public double getAverageOverValue() {
 		int total = 0;
 		// handle trivial case
-		if ( this.bids.size() == 0 ) {
+		if ( this.bids.size() < BIDCOUNT ) {
 			return 0;
 		}
 		// Iterate over bids and calculate payment above letter value
-		for ( Bid b : this.bids ) {
+		// Only consider the last BIDCOUNT bids.
+		for ( int i= bids.size()-BIDCOUNT;i<bids.size();i ++ ) 
+		{
+			Bid b = bids.get(i);
 			total += (b.getBid()-b.getValue());
 		}
-		return total/this.bids.size();
+		return total/BIDCOUNT;
 	}
 	
 }

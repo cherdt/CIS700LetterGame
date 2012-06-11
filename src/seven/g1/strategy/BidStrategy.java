@@ -1,7 +1,8 @@
-package seven.g1;
+package seven.g1.strategy;
 
 import java.util.ArrayList;
 
+import seven.g1.bean.Statistics;
 import seven.ui.Letter;
 
 public interface BidStrategy {

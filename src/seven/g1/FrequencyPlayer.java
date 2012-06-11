@@ -11,8 +11,10 @@ import seven.ui.Letter;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
-import seven.g1.Bid;
-import seven.g1.Opponent;
+import seven.g1.bean.Bid;
+import seven.g1.bean.Opponent;
+import seven.g1.bean.Statistics;
+import seven.g1.bean.Word;
 
 public class FrequencyPlayer implements Player {
 
@@ -85,7 +87,7 @@ public class FrequencyPlayer implements Player {
 	public void newRound(SecretState secretState, int current_round) {
 		ArrayList<Word> word = new ArrayList<Word>();
 		Collections.addAll(word, sevenLetterWords);
-		stats = new Statistics(secretState, word);
+		stats = new Statistics(secretState, word, myID);
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -180,6 +182,7 @@ public class FrequencyPlayer implements Player {
 	 */
     public void bidResult(boolean won, Letter letter, PlayerBids bids) {
     	stats.removeChar(letter.getCharacter());
+		stats.updateBids(letter, bids);
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());

@@ -1,4 +1,4 @@
-package seven.g1;
+package seven.g1.bean;
 
 import org.apache.log4j.Logger;
 

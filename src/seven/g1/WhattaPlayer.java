@@ -10,8 +10,15 @@ import seven.ui.Letter;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
-import seven.g1.Bid;
-import seven.g1.Opponent;
+import seven.g1.bean.Bid;
+import seven.g1.bean.Opponent;
+import seven.g1.bean.Statistics;
+import seven.g1.bean.Word;
+import seven.g1.strategy.BidStrategy;
+import seven.g1.strategy.FewLettersStrategy;
+import seven.g1.strategy.ImproveSevenStrategy;
+import seven.g1.strategy.MustGetSeventhStrategy;
+import seven.g1.strategy.StatsStrategy;
 
 public class WhattaPlayer extends G1Player implements Player {
 
@@ -55,7 +62,7 @@ public class WhattaPlayer extends G1Player implements Player {
 	public void newRound(SecretState secretState, int current_round) {
 		ArrayList<Word> word = new ArrayList<Word>();
 		Collections.addAll(word, G1Player.sevenLetterWords);
-		stats = new Statistics(secretState, word);
+		stats = new Statistics(secretState, word, myID);
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -111,43 +118,22 @@ public class WhattaPlayer extends G1Player implements Player {
 	 * Defense factor is to prevent other players from bidding high
 	 * but getting letters cheaply
 	 */
-	private int getDefenseFactor( ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, int numOfSecretLetters ) {
+	public int getDefenseFactor( ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, int numOfSecretLetters ) {
 		
 		int defenseFactor = 0;
 		int overbidTolerance = 5;
-		// Current idea -- if any opponent is bidding, on average, greater than the
-		// letter value + the overbid tolerance, increase the Defense Factor to 50/(7-# of secret letters)
-		List<Opponent> opponents = new ArrayList<Opponent>(playerList.size());
-		int id = 0;
-		// Initialize opponents
-		for ( String playerName : playerList ) {
-			opponents.add( new Opponent() );
-			opponents.get(id).setId(id);
-			id++;
-		}
-
-		// Iterate over bidding rounds
-		for ( PlayerBids round : playerBidList ) {
-			Letter targetLetter = round.getTargetLetter();
-			id = 0;
-			for ( int bid : round.getBidvalues() ) {
-				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
-				id++;
-			}
-		}
+		stats.initPlayers(playerList);
 		// Iterate over opponents
-		for ( Opponent opponent : opponents ) {
-			if ( opponent.getId() != this.myID ) {
-				// Tried 10 at first, but Random Player slips under it
-				// && opponent.getBids().size() >= 3
-				if ( opponent.getAverageOverValue() > overbidTolerance ) {
-					// A random +/-2 to make less unpredictable
-					defenseFactor = 50/(7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
-					break;
-				}
+		for ( Opponent opponent : stats.getOpponents() ) {
+			// Tried 10 at first, but Random Player slips under it
+			// && opponent.getBids().size() >= 3
+			if ( opponent.getAverageOverValue() > overbidTolerance ) {
+				// A random +/-2 to make less unpredictable
+				defenseFactor = 50/(7-numOfSecretLetters) + (int)Math.round(Math.random()*4)-2;
+				break;
 			}
 		}
-		logger.trace("Defense factor: " + defenseFactor);
+		logger.trace("Defense factor: " + defenseFactor + " turnsLeft = "+stats.turnsLeft());
 
 		return defenseFactor;
 	}
@@ -160,6 +146,7 @@ public class WhattaPlayer extends G1Player implements Player {
 	 */
     public void bidResult(boolean won, Letter letter, PlayerBids bids) {
     	stats.removeChar(letter.getCharacter());
+		stats.updateBids(letter, bids);
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());
@@ -211,8 +198,4 @@ public class WhattaPlayer extends G1Player implements Player {
 	public void updateScores(ArrayList<Integer> scores) {
 		
 	}
-
-
-
-
 }

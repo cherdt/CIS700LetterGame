@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import seven.ui.Letter;
+import seven.g1.bean.Word;
 import seven.ui.Player;
-import seven.ui.PlayerBids;
-import seven.ui.SecretState;
 
 public abstract class G1Player implements Player {
 
@@ -51,45 +49,7 @@ public abstract class G1Player implements Player {
 		sevenLetterWords = seven.toArray(new Word[seven.size()]);
 	}
 	
-	@Override
-	public void newGame(int id, int number_of_rounds, int number_of_players) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void newRound(SecretState secretState, int current_round) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public int getBid(Letter bidLetter, ArrayList<PlayerBids> PlayerBidList,
-			ArrayList<String> PlayerList, SecretState secretstate) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void bidResult(boolean won, Letter letter, PlayerBids bids) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public String getWord() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void updateScores(ArrayList<Integer> scores) {
-		// TODO Auto-generated method stub
-
-	}
-
-	
-	protected static int getBestScore(List<Character> letters) {
+	public static int getBestScore(List<Character> letters) {
 		
 		char c[] = new char[letters.size()];
 		for (int i = 0; i < c.length; i++) {

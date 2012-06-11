@@ -1,15 +1,18 @@
-package seven.g1;
+package seven.g1.strategy;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import seven.g1.G1Player;
+import seven.g1.bean.Statistics;
 import seven.ui.Letter;
 
-public class ImproveSevenStrategy implements BidStrategy {
+public class MustGetSeventhStrategy implements BidStrategy {
 
 	@Override
 	public int getBid( Letter bidLetter, ArrayList<Character> currentLetters, 
 			Statistics stats, int defenseFactor ) {
+		// If an additional letter will get us a ~50 point bonus, we can spend up to ~50 points to get it!
 		List<Character> list = new ArrayList<Character>(currentLetters);
 		// Add new letter
 		list.add(bidLetter.getCharacter());
@@ -20,10 +23,11 @@ public class ImproveSevenStrategy implements BidStrategy {
 		if ( afterScore > beforeScore  ) {
 			benefit = afterScore - beforeScore;
 		}
-		if ( bidLetter.getValue() < benefit ) {
-			return benefit-1;
+		if ( benefit >= 50 ) {
+			// Scale by the amount of turns left.
+			return benefit- stats.turnsLeft();
 		} else {
-			return 2;
+			return 1+defenseFactor;
 		}	
 	}
 

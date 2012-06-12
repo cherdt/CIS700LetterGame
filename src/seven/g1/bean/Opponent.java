@@ -7,7 +7,7 @@ import seven.ui.Letter;
 
 public class Opponent 
 {
-	private static final int BIDCOUNT = 3;
+	private static final int BIDCOUNT = 2;
 	private List<Bid> bids = new ArrayList<Bid>();
 	private List<Letter> letters = new ArrayList<Letter>();
 	private int id;

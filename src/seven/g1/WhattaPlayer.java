@@ -38,6 +38,7 @@ public class WhattaPlayer extends G1Player implements Player {
 	private int myID;
 	
 	private Statistics stats;
+	private Pascal pascal;
 
 	private BidStrategy fewLettersStrategy = new FewLettersStrategy();
 	private BidStrategy improveSevenStrategy = new ImproveSevenStrategy();
@@ -51,6 +52,7 @@ public class WhattaPlayer extends G1Player implements Player {
      */
 	public void newGame(int id, int number_of_rounds, int number_of_players) {
 		myID = id;
+		pascal = new Pascal(50);
 	}
 
 
@@ -82,11 +84,21 @@ public class WhattaPlayer extends G1Player implements Player {
 	 * secretState = your secret state (which includes the score)
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
-
+		
 		// Defense factor is to prevent other players from bidding high
 		// but getting letters cheaply
 		int defenseFactor = getDefenseFactor(playerBidList,playerList, secretState.getSecretLetters().size() );
 
+		
+		// What are the chances we can get 7 or more letters?
+		if ( currentLetters.size() < 7 ) {
+			double prob = pascal.getProb(stats.turnsLeft(), 7-currentLetters.size(), (1d/playerList.size()));
+			logger.trace("Probability of getting 7 letters: " + prob);
+			// Use this as a multiplier how
+			defenseFactor = (int) (defenseFactor*prob);
+		}
+
+		
 		// Default strategy is to play the statistics
 		// TODO if we happen to pick up Z/X/Q etc., the player basically gives up all hope. Why not ignore it and gun for an 8th letter?
 		BidStrategy strategy = statsStrategy;

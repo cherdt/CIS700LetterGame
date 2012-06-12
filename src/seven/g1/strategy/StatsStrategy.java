@@ -13,7 +13,7 @@ public class StatsStrategy implements BidStrategy {
 		double st = stats.getStatistics(bidLetter.getCharacter());
 		
 		// TODO update this calculation. We might want a negative factor for letters than currently produce stat factor zero?
-		int statFactor = (int)Math.round(3d * (1- st));
+		int statFactor = (int)Math.round(5d * (1- st));
 		// Don't bid on something that won't help at all
 		if ( st == 1 ) {
 			return 1;

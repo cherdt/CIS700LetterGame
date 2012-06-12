@@ -173,13 +173,15 @@ public class Statistics
 	 */
 	public void updateBids(Letter targetLetter, PlayerBids round)
 	{
-		int id =0;
+		int i = 0;
+		int id = 0;
 		// Iterate over bidding rounds
 		for ( int bid : round.getBidvalues() ) {
-			if (id != myID) {
+			if (i != myID) {
 				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
 				id++;
 			}
+			i++;
 		}
 	}
 	
@@ -236,10 +238,16 @@ public class Statistics
 		int letters = 8 - secretLetterCount;
 		
 		int turns = 0;
-		if (opponents.size() > 0)
+		for ( int i = 0; i < opponents.size(); i++ )
 		{
-			turns = opponents.get(0).getBids().size();
+			if ( myID != opponents.get(i).getId() )
+			{
+				logger.trace("Player " + i + " has bid " + opponents.get(i).getBids().size() + " times.");
+				turns = opponents.get(i).getBids().size();
+				break;
+			}
 		}
+
 		
 		return playerCount * letters - turns;
 	}

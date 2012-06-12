@@ -1,1 +1,12 @@
 seven.g0.RandomPlayer
+seven.g0.LetterValuePlayer
+seven.g1.FrequencyPlayer
+seven.g1.WhattaPlayer
+seven.g2.Group2Player2
+seven.g3.Group3Player
+seven.g4.G4PlayerDestroy
+seven.g5.AnotherDumbPlayer
+seven.g1.CheapLetterPlayer
+seven.g1.CheapLettersBigSpenderPlayer
+seven.g1.VowelConsonantPlayer
+seven.g1.StopSevenLettersPlayer

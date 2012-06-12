@@ -38,7 +38,6 @@ public class WhattaPlayer extends G1Player implements Player {
 	private int myID;
 	
 	private Statistics stats;
-	private Pascal pascal;
 
 	private BidStrategy fewLettersStrategy = new FewLettersStrategy();
 	private BidStrategy improveSevenStrategy = new ImproveSevenStrategy();
@@ -52,7 +51,6 @@ public class WhattaPlayer extends G1Player implements Player {
      */
 	public void newGame(int id, int number_of_rounds, int number_of_players) {
 		myID = id;
-		pascal = new Pascal(50);
 	}
 
 
@@ -91,12 +89,14 @@ public class WhattaPlayer extends G1Player implements Player {
 
 		
 		// What are the chances we can get 7 or more letters?
+		/*
 		if ( currentLetters.size() < 7 ) {
-			double prob = pascal.getProb(stats.turnsLeft(), 7-currentLetters.size(), (1d/playerList.size()));
+			double prob = stats.getProb(stats.turnsLeft(), 7-currentLetters.size(), (1d/playerList.size()));
 			logger.trace("Probability of getting 7 letters: " + prob);
 			// Use this as a multiplier how
 			defenseFactor = (int) (defenseFactor*prob);
 		}
+		*/
 
 		
 		// Default strategy is to play the statistics

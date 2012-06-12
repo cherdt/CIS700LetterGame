@@ -22,6 +22,7 @@ public class Statistics
 	private List<Word> availableWords;
 	private Logger logger = Logger.getLogger(this.getClass());
 	private List<Character> chars;
+	private double[][] pascalsTriangle; // A way to lookup combinations w/out factorials
 	private boolean useIgnoreChars = true;
 	private final char[] ignoreChars = "JKQXZ".toCharArray(); // There are times we might want to ignore these?
 	private List<Character> ignoreList;
@@ -29,9 +30,10 @@ public class Statistics
 	List<Opponent> opponents;
 	private int secretLetterCount;
 	public Statistics(SecretState state, List<Word> words, int myID)
-	{		
+	{
 		secretLetterCount = state.getSecretLetters().size();
 		this.myID = myID;
+		initTriangle(0);
 		ignoreList = new ArrayList<Character>();
 		for ( int i = 0; i < ignoreChars.length; i++ ) {
 			ignoreList.add(ignoreChars[i]);
@@ -192,6 +194,7 @@ public class Statistics
 	 */
 	public void initPlayers(ArrayList<String> playerList)
 	{
+		initTriangle(playerList.size()*8);
 		if (opponents == null)
 		{
 			opponents = new ArrayList<Opponent>();
@@ -250,6 +253,49 @@ public class Statistics
 
 		
 		return playerCount * letters - turns;
+	}
+	
+	
+	public void initTriangle( int s ) {
+		pascalsTriangle = new double[s+1][s+1];
+		pascalsTriangle[0][0] = 1;
+		for ( int i = 1; i <= s; i++ ) {
+			for ( int j = 0; j <= s; j++ ) {
+				if (j-1 >= 0 ) {
+					pascalsTriangle[i][j] = pascalsTriangle[i-1][j] + pascalsTriangle[i-1][j-1];
+				} else {
+					pascalsTriangle[i][j] = pascalsTriangle[i-1][j];
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Returns the number of combinations of n items taken r at a time
+	 * Obviously this will give an error if n or r exceed the dimensions of the array
+	 */
+	public double getComb ( int n, int r ) {
+		if ( n < this.pascalsTriangle.length && r < this.pascalsTriangle[0].length )
+		{
+			return this.pascalsTriangle[n][r];
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+
+	/*
+	 * Returns the probability of r or more occurrences of n trials
+	 * given the probability p
+	 * TODO: this is not returning values in the expected range
+	 */
+	public double getProb ( int n, int r, double p ) {
+		double prob = 0.0;
+		for ( int i = r; i < n; i++ ) {
+			prob += (getComb(n,i)/Math.pow(2, n)) * Math.pow(p, i) * Math.pow(1-p, n-i);
+		}
+		return prob;
 	}
 	
 	/*

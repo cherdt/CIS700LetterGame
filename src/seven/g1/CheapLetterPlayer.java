@@ -1,14 +1,12 @@
 package seven.g1;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.io.*;
 
 import org.apache.log4j.Logger;
 
 import seven.g0.Word;
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
@@ -31,10 +29,6 @@ public class CheapLetterPlayer implements Player {
 	
 	// unique ID
 	private int myID;
-	
-	// for generating random numbers
-	private Random random = new Random();
-		
 	
 	/* This code initializes the word list */
 	static {

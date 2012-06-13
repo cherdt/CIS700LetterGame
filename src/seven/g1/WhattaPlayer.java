@@ -3,30 +3,31 @@ package seven.g1;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.io.*;
 
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
-import seven.g1.Bid;
-import seven.g1.Opponent;
+import seven.g1.bean.Bid;
+import seven.g1.bean.Opponent;
+import seven.g1.bean.Statistics;
+import seven.g1.bean.Word;
+import seven.g1.strategy.BidStrategy;
+import seven.g1.strategy.FewLettersStrategy;
+import seven.g1.strategy.ImproveSevenStrategy;
+import seven.g1.strategy.MustGetSeventhStrategy;
+import seven.g1.strategy.StatsStrategy;
 
-public class WhattaPlayer implements Player {
+public class WhattaPlayer extends G1Player implements Player {
 
 	
 	/*
-	 * This player bids randomly.
+	 * This player uses different bidding strategies based on the game state.
 	 */
 	
-	// an array of words to be used for making decisions
-	private static final Word[] wordlist;
 
-	private static final Word[] sevenLetterWords;
 	// for logging
 	private Logger logger = Logger.getLogger(this.getClass());
 
@@ -36,44 +37,12 @@ public class WhattaPlayer implements Player {
 	// unique ID
 	private int myID;
 	
-	// for generating random numbers
-	private Random random = new Random();
-	
 	private Statistics stats;
-	/* This code initializes the word list */
-	static {
-		BufferedReader r;
-		String line = null;
-		ArrayList<Word> wtmp = new ArrayList<Word>(55000);
-		ArrayList<Word> seven = new ArrayList<Word>(27000);
-		try {
-			// you can use textFiles/dictionary.txt if you want the whole list
-			// or you can use super-small-wordlist.txt
-			r = new BufferedReader(new FileReader("textFiles/dictionary.txt"));
-			while (null != (line = r.readLine())) {
 
-				String[] split = line.split(","); 
-				if ( split.length==2 )
-				{
-					wtmp.add(new Word(split[1].trim()));
-					// Add 7-letter words to a special list
-					if ( split[1].trim().length() == 7 ) {
-						seven.add(new Word(split[1].trim()));
-					}
-				}
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		wordlist = wtmp.toArray(new Word[wtmp.size()]);
-		sevenLetterWords = seven.toArray(new Word[seven.size()]);
-	}
-
-	
+	private BidStrategy fewLettersStrategy = new FewLettersStrategy();
+	private BidStrategy improveSevenStrategy = new ImproveSevenStrategy();
+	private BidStrategy mustGetSeventhStrategy = new MustGetSeventhStrategy();
+	private BidStrategy statsStrategy = new StatsStrategy();
     /*
      * This is called once at the beginning of a Game.
      * The id is what the game considers to be your unique identifier
@@ -92,8 +61,8 @@ public class WhattaPlayer implements Player {
 	 */
 	public void newRound(SecretState secretState, int current_round) {
 		ArrayList<Word> word = new ArrayList<Word>();
-		Collections.addAll(word, sevenLetterWords);
-		stats = new Statistics(secretState, word);
+		Collections.addAll(word, G1Player.sevenLetterWords);
+		stats = new Statistics(secretState, word, myID);
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -114,78 +83,77 @@ public class WhattaPlayer implements Player {
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
 		
-		if ( getWord().length() >= 7 ) {
-			List<Character> list = new ArrayList<Character>(currentLetters);
-			// Add new letter
-			list.add(bidLetter.getCharacter());
-			// See if bid letter will increase our score
-			int beforeScore = getBestScore(currentLetters);
-			int afterScore = getBestScore(list);
-			int benefit = 0;
-			if ( afterScore > beforeScore ) {
-				benefit = afterScore - beforeScore;
-			}
-			if ( bidLetter.getValue() < benefit ) {
-				return benefit-1;
-			} else {
-				return 1;
-			}			
-		}
-		
-
 		// Defense factor is to prevent other players from bidding high
 		// but getting letters cheaply
-		int defenseFactor = 0;
-		// Current idea -- if any opponent is bidding, on average, 10 greater
-		// than the letter value -- increase Defense Factor to 7
-		List<Opponent> opponents = new ArrayList<Opponent>(playerList.size());
-		int id = 0;
-		// Initialize opponents
-		for ( String playerName : playerList ) {
-			opponents.add( new Opponent() );
-			opponents.get(id).setId(id);
-			id++;
-		}
+		int defenseFactor = getDefenseFactor(playerBidList,playerList, secretState.getSecretLetters().size() );
 
-		// Iterate over bidding rounds
-		for ( PlayerBids round : playerBidList ) {
-			Letter targetLetter = round.getTargetLetter();
-			id = 0;
-			for ( int bid : round.getBidvalues() ) {
-				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
-				id++;
+		
+		// What are the chances we can get 7 or more letters?
+		/*
+		if ( currentLetters.size() < 7 ) {
+			double prob = stats.getProb(stats.turnsLeft(), 7-currentLetters.size(), (1d/playerList.size()));
+			logger.trace("Probability of getting 7 letters: " + prob);
+			// Use this as a multiplier how
+			defenseFactor = (int) (defenseFactor*prob);
+		}
+		*/
+
+		
+		// Default strategy is to play the statistics
+		// TODO if we happen to pick up Z/X/Q etc., the player basically gives up all hope. Why not ignore it and gun for an 8th letter?
+		BidStrategy strategy = statsStrategy;
+		logger.trace("Using Stats Strategy (default)");
+
+		// If we already have a 7 letter word...
+		if ( getWord().length() >= 7 ) {
+			strategy = improveSevenStrategy;
+			logger.trace("Switching to ImproveSevenStrategy");
+		} else {
+			// If we have 6 letters and desperately want a seventh...
+			if ( currentLetters.size() >= 6 ) {
+				strategy = mustGetSeventhStrategy;
+				logger.trace("Switching to MustGetSeventhStrategy");
+			}
+			
+			// If we only have a few letters...
+			if (currentLetters.size() < 3 )	{
+				strategy = fewLettersStrategy;
+				logger.trace("Switching to FewLettersStrategy");
 			}
 		}
-		// Iterate over opponents
-		for ( Opponent opponent : opponents ) {
-			// Tried 10 at first, but Random Player slips under it
-			// && opponent.getBids().size() >= 3
-			if ( opponent.getAverageOverValue() > 5 ) {
-				defenseFactor = 5 + (int)Math.round(Math.random()*4)-2;
-				break;
-			}
-		}
-		logger.trace("Defense factor: " + defenseFactor);
 		
-		
-		if (currentLetters.size() < 3 && bidLetter.getValue() < 4)
-		{
-			return bidLetter.getValue()+ (int)Math.round(Math.random()*3) + defenseFactor;
-		} else if (currentLetters.size() < 3) {
-			return bidLetter.getValue();
-		}
-		
-		double st = stats.getStatistics(bidLetter.getCharacter());
-
-		int statFactor = (int)Math.round(3d * (1- st));
-		logger.trace("Stat Factor: " + statFactor + " (st: " + st + ")");
-		// Don't bid on something that won't help
-		if ( st == 1 ) {
-			return 1;
-		}
-		return statFactor + bidLetter.getValue() + defenseFactor;
+		return strategy.getBid(bidLetter, currentLetters, stats, defenseFactor);
 	}
 
+
+	/*
+	 * Defense factor is to prevent other players from bidding high
+	 * but getting letters cheaply
+	 */
+	public int getDefenseFactor( ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, int numOfSecretLetters ) {
+		
+		int defenseFactor = 0;
+		int overbidTolerance = 6;
+		stats.initPlayers(playerList);
+		// Iterate over opponents
+		for ( Opponent opponent : stats.getOpponents() ) {
+			// Tried 10 at first, but Random Player slips under it
+			// && opponent.getBids().size() >= 3
+			if ( opponent.getAverageOverValue() > overbidTolerance ) {
+				// A random +/-2 to make less unpredictable
+				// 50/(7-numOfSecretLetters)
+				int tempFactor = overbidTolerance - opponent.getLetterCount() + (int)Math.round(Math.random()*4)-2;
+				if (tempFactor > defenseFactor)
+				{
+					defenseFactor = tempFactor;
+				}
+			}
+		}
+		logger.trace("Defense factor: " + defenseFactor + " turnsLeft = "+stats.turnsLeft());
+
+		return defenseFactor > 0 ? defenseFactor : 0 ;
+	}
+	
 	
 	/*
 	 * This method is called after a bid. It indicates whether or not the player
@@ -194,6 +162,7 @@ public class WhattaPlayer implements Player {
 	 */
     public void bidResult(boolean won, Letter letter, PlayerBids bids) {
     	stats.removeChar(letter.getCharacter());
+		stats.updateBids(letter, bids);
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());
@@ -238,27 +207,6 @@ public class WhattaPlayer implements Player {
 		return bestword.word;
 	}
 	
-	private int getBestScore(List<Character> letters) {
-		
-		char c[] = new char[letters.size()];
-		for (int i = 0; i < c.length; i++) {
-			c[i] = letters.get(i);
-		}
-		String s = new String(c);
-		Word ourletters = new Word(s);
-		Word bestword = new Word("");
-		for (Word w : wordlist) {
-			if (ourletters.contains(w)) {
-				if (w.score > bestword.score) {
-					bestword = w;
-				}
-
-			}
-		}
-		
-		return bestword.score;
-	}
-	
 	/*
 	 * This method is called at the end of the round
 	 * The ArrayList contains the scores of all the players, ordered by their ID
@@ -266,8 +214,4 @@ public class WhattaPlayer implements Player {
 	public void updateScores(ArrayList<Integer> scores) {
 		
 	}
-
-
-
-
 }

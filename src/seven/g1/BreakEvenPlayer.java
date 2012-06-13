@@ -11,7 +11,7 @@ import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
 
-public class VowelConsonantPlayer implements Player {
+public class BreakEvenPlayer implements Player {
 
 	
 	/*
@@ -29,7 +29,8 @@ public class VowelConsonantPlayer implements Player {
 	
 	// unique ID
 	private int myID;
-		
+	
+	private int pointsSpent;
 	
 	/* This code initializes the word list */
 	static {
@@ -71,6 +72,8 @@ public class VowelConsonantPlayer implements Player {
 	 */
 	public void newRound(SecretState secretState, int current_round) {
 
+		pointsSpent = 0;
+
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -80,21 +83,7 @@ public class VowelConsonantPlayer implements Player {
 			currentLetters.add(l.getCharacter());
 		}
 	}
-
-	public boolean isVowel(char c) {
-		switch (c) {
-			case 'a':
-			case 'e':
-			case 'i':
-			case 'o':
-			case 'u':
-			case 'y':
-				return true;
-			default: 
-				return false;
-		}
-		
-	}
+	
 
 	/*
 	 * This method is called when there is a new letter available for bidding.
@@ -107,30 +96,9 @@ public class VowelConsonantPlayer implements Player {
 		//logger.trace("myID=" + myID + " and I'm bidding on " + bidLetter);
 		//logger.trace("myID= " + myID + " and my score is " + secretState.getScore());
 		int bid = 0;
-		int vowels = 0;
-		int consonants = 0;
-		for ( char letter : this.currentLetters ) {
-			if (isVowel(letter)) {
-				vowels++;
-			} else {
-				consonants++;
-			}
-		}
 		
-		// We'll need more consonants than vowels, but not so many
-		// Weight our bid based on what we already have
-		if ( (double) consonants / (double) vowels > 2 ) {
-			if ( isVowel(bidLetter.getCharacter()) ) {
-				bid = 7 + bidLetter.getValue();
-			} else {
-				bid = 2 + bidLetter.getValue();
-			}
-		} else {
-			if ( isVowel(bidLetter.getCharacter()) ) {
-				bid = 2 + bidLetter.getValue();
-			} else {
-				bid = 7 + bidLetter.getValue();
-			}			
+		if ( currentLetters.size() < 10 && bidLetter.getValue() <= 2) {
+			bid = ((57-pointsSpent)/(10-currentLetters.size()));			
 		}
 		
 		return bid;
@@ -146,6 +114,7 @@ public class VowelConsonantPlayer implements Player {
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());
+    		pointsSpent+=bids.getWinAmmount();
     	}
     	else {
     		//logger.trace("My ID is " + myID + " and I lost the bid for " + letter);

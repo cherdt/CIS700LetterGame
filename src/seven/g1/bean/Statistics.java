@@ -1,4 +1,4 @@
-package seven.g1;
+package seven.g1.bean;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
+import seven.ui.PlayerBids;
 import seven.ui.SecretState;
 
 public class Statistics
@@ -18,17 +19,32 @@ public class Statistics
 	
 	//public Map<Integer, Opponents> oponnents
 	
-	public List<Word> availableWords;
+	private List<Word> availableWords;
 	private Logger logger = Logger.getLogger(this.getClass());
-	public List<Character> chars;
-	
-	public Statistics(SecretState state, List<Word> words)
+	private List<Character> chars;
+	private double[][] pascalsTriangle; // A way to lookup combinations w/out factorials
+	private boolean useIgnoreChars = true;
+	private final char[] ignoreChars = "JKQXZ".toCharArray(); // There are times we might want to ignore these?
+	private List<Character> ignoreList;
+	private int myID;
+	List<Opponent> opponents;
+	private int secretLetterCount;
+	public Statistics(SecretState state, List<Word> words, int myID)
 	{
+		secretLetterCount = state.getSecretLetters().size();
+		this.myID = myID;
+		initTriangle(0);
+		ignoreList = new ArrayList<Character>();
+		for ( int i = 0; i < ignoreChars.length; i++ ) {
+			ignoreList.add(ignoreChars[i]);
+		}
+		
 		chars = new ArrayList<Character>();
 		for (Letter l : state.getSecretLetters())
 		{
 			chars.add(l.getCharacter());
-		}this.availableWords = words;
+		}
+		this.availableWords = words;
 		available.put('A', new LetterObject('A', 1, 9));
 		available.put('B', new LetterObject('B', 3,2));
 		available.put('C', new LetterObject('C', 3,2));
@@ -75,7 +91,9 @@ public class Statistics
 		StringBuilder b = new StringBuilder();
 		for (Character ch : chars)
 		{
-			b.append(ch);
+			if ( !useIgnoreChars || !ignoreList.contains(ch) ) {
+				b.append(ch);
+			}
 		}
 		// Add a new character if it exists.
 		if (c != '0')
@@ -99,6 +117,10 @@ public class Statistics
 			while (words.hasNext())
 			{
 				Word word = words.next();
+				
+				// Get Edit Distance for each word
+				// logger.trace("Edit distance between " + word.word + " & " + w.word + " is " + word.getEditDistance(w));
+				
 				if (!word.contains(w) || !stillAvailLetters.contains(word) )
 				{
 					words.remove();
@@ -126,11 +148,21 @@ public class Statistics
 		for (Character chars : available.keySet())
 		{
 			LetterObject o = available.get(chars);
+			logger.trace(o.getCharacter() + ":" + o.getStats() + " words eliminated");
+			int allEliminatedCount = 0;
 			if ( availableWords.size() == 0 ) {
 				logger.trace("Char " + o.getCharacter() + " loses 100%");
+				allEliminatedCount++;
 				o.setStats(1);
 			} else {
 				o.setStats( o.getStats()/ (double) availableWords.size());
+			}
+			
+			if ( allEliminatedCount >= 26 ) {
+				// TODO: what if all possibilities are eliminated
+				// We need to reconsider--there should be a fallback
+				// If we ignore a char, how many words will it bring back (i.e. make possible)?
+				logger.trace("All characters have been eliminated!");
 			}
 			
 			logger.trace(o.getCharacter() + ":" + o.getStats());
@@ -139,11 +171,137 @@ public class Statistics
 		
 		
 	}
+	/**
+	 * Add the latest round to the opponent statistics.
+	 * 
+	 * @param targetLetter
+	 * @param round
+	 */
+	public void updateBids(Letter targetLetter, PlayerBids round)
+	{
+		int i = 0;
+		int id = 0;
+		// Iterate over bidding rounds
+		for ( int bid : round.getBidvalues() ) {
+			if (i != myID) {
+				opponents.get(id).addBid(new Bid(bid,targetLetter.getValue(),targetLetter.getCharacter()));
+				id++;
+			}
+			i++;
+		}
+	}
 	
+	/**
+	 * Create the list of players.  Only do this once.
+	 * 
+	 * @param playerList
+	 */
+	public void initPlayers(ArrayList<String> playerList)
+	{
+		initTriangle(playerList.size()*8);
+		if (opponents == null)
+		{
+			opponents = new ArrayList<Opponent>();
+			for (int i=0;i<playerList.size();i++)
+			{
+				// Do not add yourself.
+				if (i != myID)
+				{
+					Opponent o = new Opponent();
+					o.setId(i);
+					opponents.add(o);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Get the statistical value for the provided character.
+	 * 
+	 * @param c
+	 * @return
+	 */
 	public double getStatistics(char c)
 	{
 		return available.get(c).getStats();
 	}
+	
+	/**
+	 * Get the list of opponents.
+	 * 
+	 */
+	public List<Opponent> getOpponents()
+	{
+		return opponents;
+	}
+	
+	/**
+	 * Returns the amount of turns left in the round.
+	 * 
+	 */
+	public int turnsLeft()
+	{
+		int playerCount = this.opponents.size()+1;
+		int letters = 8 - secretLetterCount;
+		
+		int turns = 0;
+		for ( int i = 0; i < opponents.size(); i++ )
+		{
+			if ( myID != opponents.get(i).getId() )
+			{
+				logger.trace("Player " + i + " has bid " + opponents.get(i).getBids().size() + " times.");
+				turns = opponents.get(i).getBids().size();
+				break;
+			}
+		}
+
+		
+		return playerCount * letters - turns;
+	}
+	
+	
+	public void initTriangle( int s ) {
+		pascalsTriangle = new double[s+1][s+1];
+		pascalsTriangle[0][0] = 1;
+		for ( int i = 1; i <= s; i++ ) {
+			for ( int j = 0; j <= s; j++ ) {
+				if (j-1 >= 0 ) {
+					pascalsTriangle[i][j] = pascalsTriangle[i-1][j] + pascalsTriangle[i-1][j-1];
+				} else {
+					pascalsTriangle[i][j] = pascalsTriangle[i-1][j];
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Returns the number of combinations of n items taken r at a time
+	 * Obviously this will give an error if n or r exceed the dimensions of the array
+	 */
+	public double getComb ( int n, int r ) {
+		if ( n < this.pascalsTriangle.length && r < this.pascalsTriangle[0].length )
+		{
+			return this.pascalsTriangle[n][r];
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+
+	/*
+	 * Returns the probability of r or more occurrences of n trials
+	 * given the probability p
+	 * TODO: this is not returning values in the expected range
+	 */
+	public double getProb ( int n, int r, double p ) {
+		double prob = 0.0;
+		for ( int i = r; i < n; i++ ) {
+			prob += (getComb(n,i)/Math.pow(2, n)) * Math.pow(p, i) * Math.pow(1-p, n-i);
+		}
+		return prob;
+	}
+	
 	/*
 	 * switch(Character.toLowerCase(bidLetter.getCharacter()))
 		{

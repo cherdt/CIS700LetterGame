@@ -36,8 +36,9 @@ public class LetterGame {
      }
      
      public static ArrayList<Letter> getRemainingLetters() {
-    	 ArrayList<Letter> letters = new ArrayList<Letter>();
-    	 Collections.copy(letters, wordbag);
+    	 ArrayList<Letter> letters = new ArrayList<Letter>(wordbag);
+    	 //Collections.copy(letters, wordbag);
+    	 
     	 return letters;
      }
 

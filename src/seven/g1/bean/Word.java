@@ -1,4 +1,4 @@
-package seven.g1;
+package seven.g1.bean;
 
 import org.apache.log4j.Logger;
 
@@ -61,6 +61,17 @@ public class Word {
 		word = b.toString();
 		assert(length == word.length());
 	}
+	
+	public int getEditDistance(Word w) {
+		int editDistance = 0;
+		for ( int i = 0; i < this.countKeep.length; i++ ) {
+			if ( this.countKeep[i] > w.countKeep[i] ) {
+				editDistance = editDistance + (this.countKeep[i] - w.countKeep[i]);
+			}
+		}
+		return editDistance;
+	}
+	
 	/**
 	 * returns true if the word w can be formed from the letters contained in the word bag object we have currently
 	 * @return

@@ -9,12 +9,13 @@ import java.io.*;
 import org.apache.log4j.Logger;
 
 import seven.ui.Letter;
-import seven.ui.LetterGame;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
 import seven.ui.SecretState;
-import seven.g1.Bid;
-import seven.g1.Opponent;
+import seven.g1.bean.Bid;
+import seven.g1.bean.Opponent;
+import seven.g1.bean.Statistics;
+import seven.g1.bean.Word;
 
 public class StopSevenLettersPlayer implements Player {
 
@@ -35,9 +36,6 @@ public class StopSevenLettersPlayer implements Player {
 	
 	// unique ID
 	private int myID;
-	
-	// for generating random numbers
-	private Random random = new Random();
 	
 	private Statistics stats;
 	/* This code initializes the word list */
@@ -88,7 +86,7 @@ public class StopSevenLettersPlayer implements Player {
 	public void newRound(SecretState secretState, int current_round) {
 		ArrayList<Word> word = new ArrayList<Word>();
 		Collections.addAll(word, sevenLetterWords);
-		stats = new Statistics(secretState, word);
+		stats = new Statistics(secretState, word, myID);
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -108,7 +106,6 @@ public class StopSevenLettersPlayer implements Player {
 	 * secretState = your secret state (which includes the score)
 	 */
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
-		List<Character> list = new ArrayList<Character>(currentLetters);
 
 		// Keep track of how many players have exactly 6 letters
 		int sixLetterCount = 0;

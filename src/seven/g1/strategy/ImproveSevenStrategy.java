@@ -23,7 +23,7 @@ public class ImproveSevenStrategy implements BidStrategy {
 			benefit = afterScore - beforeScore;
 		}
 		if ( benefit > 0 ) {
-			return benefit - 1;
+			return benefit;
 		}	
 		else
 		{

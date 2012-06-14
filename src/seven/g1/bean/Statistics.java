@@ -90,18 +90,24 @@ public class Statistics
 	{
 		// Build the string of current characters.
 		StringBuilder b = new StringBuilder();
+		StringBuilder ourLetters = new StringBuilder();
 		for (Character ch : chars)
 		{
+			ourLetters.append(ch);
 			if ( !useIgnoreChars || !ignoreList.contains(ch) ) {
 				b.append(ch);
 			}
 		}
+		// TODO The min distance at start is likely to be 10, which is always greater than the distance to a 7-letter word
+		// We would always bid low in this case.
 		int maxDistance = Math.min(10 - this.chars.size(), this.turnsLeft() / 2);
+		logger.trace("Max edit distance: " + maxDistance);
 		// Add a new character if it exists.
 		if (c != '0')
 		{
 			chars.add(c);
 			Word w = new Word(b.toString());
+
 
 			// Create list/word out of chars still available
 			StringBuilder stillAvail = new StringBuilder(100);
@@ -114,6 +120,8 @@ public class Statistics
 			}
 			Word stillAvailLetters = new Word(stillAvail.toString());
 			
+			Word wordsWeCanStillMake = new Word(stillAvail.toString() + ourLetters.toString());
+			
 			// Remove all words that no longer apply.
 			Iterator<Word> words = availableWords.iterator();
 			while (words.hasNext())
@@ -123,12 +131,14 @@ public class Statistics
 				// Get Edit Distance for each word
 				// logger.trace("Edit distance between " + word.word + " & " + w.word + " is " + word.getEditDistance(w));
 				
-				if (!word.contains(w) || stillAvailLetters.getEditDistance(word) >= maxDistance )
+				//stillAvailLetters.getEditDistance(word) >= maxDistance
+				if (!word.contains(w) || word.getEditDistance(wordsWeCanStillMake) == 0 )
 				{
 					words.remove();
 				}
 			}
 		}
+		
 		// Get the count of words that are lost.
 		for (Character chars : available.keySet())
 		{
@@ -138,6 +148,7 @@ public class Statistics
 			Word w = new Word(b.toString());
 			for (Word word : availableWords)
 			{
+				//logger.trace("word: " + word.word + " letters: " + w.word + " edit distance: " + word.getEditDistance(w) + " max distance: " + maxDistance);
 				if (word.getEditDistance(w) >= maxDistance)
 				{
 					o.setStats(o.getStats()+1);

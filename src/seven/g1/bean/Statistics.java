@@ -29,6 +29,7 @@ public class Statistics
 	private int myID;
 	List<Opponent> opponents;
 	private int secretLetterCount;
+	
 	public Statistics(SecretState state, List<Word> words, int myID)
 	{
 		secretLetterCount = state.getSecretLetters().size();
@@ -45,32 +46,32 @@ public class Statistics
 			chars.add(l.getCharacter());
 		}
 		this.availableWords = words;
-		available.put('A', new LetterObject('A', 1, 9));
-		available.put('B', new LetterObject('B', 3,2));
-		available.put('C', new LetterObject('C', 3,2));
-		available.put('D', new LetterObject('D', 2,4));
-		available.put('E', new LetterObject('E', 1,12));
-		available.put('F', new LetterObject('F', 4,2));
-		available.put('G', new LetterObject('G', 2,3));
-		available.put('H', new LetterObject('H', 4,2));
-		available.put('I', new LetterObject('I', 1,9));
-		available.put('J', new LetterObject('J', 8,1));
-		available.put('K', new LetterObject('K', 5,1));
-		available.put('L', new LetterObject('L', 1,4));
-		available.put('M', new LetterObject('M', 3,2));
-		available.put('N', new LetterObject('N', 1,6));
-		available.put('O', new LetterObject('O', 1,8));
-		available.put('P', new LetterObject('P', 3,2));
-		available.put('Q', new LetterObject('Q', 10,1));
-		available.put('R', new LetterObject('R', 1,6));
-		available.put('S', new LetterObject('S', 1,4));
-		available.put('T', new LetterObject('T', 1,6));
-		available.put('U', new LetterObject('U', 1,4));
-		available.put('V', new LetterObject('V', 4,2));
-		available.put('W', new LetterObject('W', 4,2));
-		available.put('X', new LetterObject('X', 8,1));
-		available.put('Y', new LetterObject('Y', 4,2));
-		available.put('Z', new LetterObject('Z', 10,1));
+		available.put('A', new LetterObject('A', 1, 9, 5, 29));
+		available.put('B', new LetterObject('B', 3,2, 5, 35));
+		available.put('C', new LetterObject('C', 3,2, 5, 45));
+		available.put('D', new LetterObject('D', 2,4, 5, 35));
+		available.put('E', new LetterObject('E', 1,12, 5, 31));
+		available.put('F', new LetterObject('F', 4,2, 5, 33));
+		available.put('G', new LetterObject('G', 2,3, 5, 32));
+		available.put('H', new LetterObject('H', 4,2, 5, 45));
+		available.put('I', new LetterObject('I', 1,9, 5, 29));
+		available.put('J', new LetterObject('J', 8,1, 5, 20));
+		available.put('K', new LetterObject('K', 5,1, 5, 29));
+		available.put('L', new LetterObject('L', 1,4, 5, 31));
+		available.put('M', new LetterObject('M', 3,2, 5, 41));
+		available.put('N', new LetterObject('N', 1,6, 5, 30));
+		available.put('O', new LetterObject('O', 1,8, 5, 33));
+		available.put('P', new LetterObject('P', 3,2, 5, 30));
+		available.put('Q', new LetterObject('Q', 10,1, 5, 20));
+		available.put('R', new LetterObject('R', 1,6, 5, 27));
+		available.put('S', new LetterObject('S', 1,4, 5, 29));
+		available.put('T', new LetterObject('T', 1,6, 5, 30));
+		available.put('U', new LetterObject('U', 1,4, 5, 25));
+		available.put('V', new LetterObject('V', 4,2, 5, 27));
+		available.put('W', new LetterObject('W', 4,2, 5, 31));
+		available.put('X', new LetterObject('X', 8,1, 5, 25));
+		available.put('Y', new LetterObject('Y', 4,2, 5, 33));
+		available.put('Z', new LetterObject('Z', 10,1, 5, 20));
 		updateCharStats('0');
 		
 		for (Letter l : state.getSecretLetters())
@@ -95,6 +96,7 @@ public class Statistics
 				b.append(ch);
 			}
 		}
+		int maxDistance = Math.min(10 - this.chars.size(), this.turnsLeft() / 2);
 		// Add a new character if it exists.
 		if (c != '0')
 		{
@@ -121,7 +123,7 @@ public class Statistics
 				// Get Edit Distance for each word
 				// logger.trace("Edit distance between " + word.word + " & " + w.word + " is " + word.getEditDistance(w));
 				
-				if (!word.contains(w) || !stillAvailLetters.contains(word) )
+				if (!word.contains(w) || stillAvailLetters.getEditDistance(word) >= maxDistance )
 				{
 					words.remove();
 				}
@@ -136,7 +138,7 @@ public class Statistics
 			Word w = new Word(b.toString());
 			for (Word word : availableWords)
 			{
-				if (!word.contains(w))
+				if (word.getEditDistance(w) >= maxDistance)
 				{
 					o.setStats(o.getStats()+1);
 				}
@@ -171,6 +173,14 @@ public class Statistics
 		
 		
 	}
+	
+	public double getAverageBid(char c)
+	{
+		LetterObject o = available.get(c);
+		
+		return (double)o.getBidTotal() / (double)o.getBidCount();
+	}
+	
 	/**
 	 * Add the latest round to the opponent statistics.
 	 * 
@@ -181,6 +191,24 @@ public class Statistics
 	{
 		int i = 0;
 		int id = 0;
+		
+		// Updating the bid values.
+		LetterObject lo = available.get(targetLetter.getCharacter());
+    	
+    	lo.setBidCount(lo.getBidCount()+1);
+    	
+    	int maxBid = 0;
+    	for (int bid : round.getBidvalues())
+    	{
+    		if (bid > maxBid && myID != id++)
+    		{
+    			maxBid = bid;
+    		}
+    	}
+    	lo.setBidTotal(lo.getBidTotal()+maxBid);
+		
+		
+		id = 0;
 		// Iterate over bidding rounds
 		for ( int bid : round.getBidvalues() ) {
 			if (i != myID) {
@@ -241,6 +269,10 @@ public class Statistics
 	 */
 	public int turnsLeft()
 	{
+		if (this.opponents == null)
+		{
+			return 32;
+		}
 		int playerCount = this.opponents.size()+1;
 		int letters = 8 - secretLetterCount;
 		
@@ -300,6 +332,10 @@ public class Statistics
 			prob += (getComb(n,i)/Math.pow(2, n)) * Math.pow(p, i) * Math.pow(1-p, n-i);
 		}
 		return prob;
+	}
+
+	public int getSecretLetterCount() {
+		return secretLetterCount;
 	}
 	
 	/*

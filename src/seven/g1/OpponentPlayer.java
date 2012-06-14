@@ -1,11 +1,14 @@
 package seven.g1;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.io.*;
 
 import org.apache.log4j.Logger;
 
 import seven.g0.Word;
+import seven.g1.bean.LetterObject;
 import seven.ui.Letter;
 import seven.ui.Player;
 import seven.ui.PlayerBids;
@@ -26,6 +29,8 @@ public class OpponentPlayer implements Player {
 
 	// the set of letters that this player currently has
 	private ArrayList<Character> currentLetters;
+	
+	private Map<Character, LetterObject> letters = new HashMap<Character, LetterObject>();
 	
 	// unique ID
 	private int myID;
@@ -50,7 +55,10 @@ public class OpponentPlayer implements Player {
 		}
 		wordlist = wtmp.toArray(new Word[wtmp.size()]);
 	}
-
+	public OpponentPlayer()
+	{
+	
+	}
 	
     /*
      * This is called once at the beginning of a Game.
@@ -69,7 +77,11 @@ public class OpponentPlayer implements Player {
 	 * The current_round indicates the current round number (0-based)
 	 */
 	public void newRound(SecretState secretState, int current_round) {
-
+		for (Character c : letters.keySet())
+		{
+			LetterObject o = letters.get(c);
+			logger.debug(c + "\t"+o.getBidCount() + "\t"+o.getBidTotal());
+		}
 		// be sure to reinitialize the list at the start of the round
 		currentLetters = new ArrayList<Character>();
 		
@@ -91,13 +103,13 @@ public class OpponentPlayer implements Player {
 	public int getBid(Letter bidLetter, ArrayList<PlayerBids> playerBidList, ArrayList<String> playerList, SecretState secretState) {
 		//logger.trace("myID=" + myID + " and I'm bidding on " + bidLetter);
 		//logger.trace("myID= " + myID + " and my score is " + secretState.getScore());
-		int bid = 0;
+		/*int bid = 0;
 		
 		// bid the value of the letter
 		if ( bidLetter.getValue() <= 2 ) {
 			bid = bidLetter.getValue()+2;
-		}
-		return bid;
+		}*/
+		return 0;
 	}
 
 	
@@ -107,6 +119,20 @@ public class OpponentPlayer implements Player {
 	 * other players' bids. 
 	 */
     public void bidResult(boolean won, Letter letter, PlayerBids bids) {
+    	LetterObject lo = letters.get(letter.getCharacter());
+    	
+    	lo.setBidCount(lo.getBidCount()+1);
+    	
+    	int maxBid = 0;
+    	for (int bid : bids.getBidvalues())
+    	{
+    		if (bid > maxBid)
+    		{
+    			maxBid = bid;
+    		}
+    	}
+    	lo.setBidTotal(lo.getBidTotal()+maxBid);
+    	
     	if (won) {
     		//logger.trace("My ID is " + myID + " and I won the bid for " + letter);
     		currentLetters.add(letter.getCharacter());
@@ -136,7 +162,7 @@ public class OpponentPlayer implements Player {
 
 			}
 		}
-		logger.trace("My ID is " + myID + " and my word is " + bestword.word);
+		logger.trace("My ID is\t" + myID + " and my word is " + bestword.word);
 		
 		return bestword.word;
 	}

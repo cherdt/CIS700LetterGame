@@ -10,7 +10,7 @@ public class StatsStrategy implements BidStrategy {
 	@Override
 	public int getBid( Letter bidLetter, ArrayList<Character> currentLetters, 
 			Statistics stats, int defenseFactor ) {
-		double st = stats.getStatistics(bidLetter.getCharacter());
+		/*double st = stats.getStatistics(bidLetter.getCharacter());
 		
 		// TODO update this calculation. We might want a negative factor for letters than currently produce stat factor zero?
 		int statFactor = (int)Math.round(5d * (1- st));
@@ -18,7 +18,20 @@ public class StatsStrategy implements BidStrategy {
 		if ( st == 1 ) {
 			return 1;
 		}
-		return statFactor + bidLetter.getValue() + defenseFactor;
+		return statFactor + bidLetter.getValue() + defenseFactor;*/
+		double st = stats.getStatistics(bidLetter.getCharacter());
+		
+		int statFactor = (int)Math.round(5d * (1- st));
+		// Don't bid on something that won't help at all
+		if ( st == 1 ) {
+			return 1;
+		}
+		
+		double d = stats.getAverageBid(bidLetter.getCharacter());
+		
+		double stat = stats.getStatistics(bidLetter.getCharacter());
+		
+		return (int)Math.round(d);
 	}
 
 }

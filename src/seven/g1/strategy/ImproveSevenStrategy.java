@@ -22,10 +22,8 @@ public class ImproveSevenStrategy implements BidStrategy {
 		if ( afterScore > beforeScore  ) {
 			benefit = afterScore - beforeScore;
 		}
-		if ( bidLetter.getValue() < benefit ) {
-			return benefit-stats.turnsLeft();
-		} else if (currentLetters.size()<=10) {
-			return Math.min(2, bidLetter.getValue());
+		if ( benefit > 0 ) {
+			return benefit - 1;
 		}	
 		else
 		{

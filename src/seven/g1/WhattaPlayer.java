@@ -110,7 +110,7 @@ public class WhattaPlayer extends G1Player implements Player {
 			logger.trace("Switching to ImproveSevenStrategy");
 		} else {
 			// If we have 6 letters and desperately want a seventh...
-			if ( currentLetters.size() >= 6 ) {
+		/*	if ( currentLetters.size() >= 6 ) {
 				strategy = mustGetSeventhStrategy;
 				logger.trace("Switching to MustGetSeventhStrategy");
 			}
@@ -119,7 +119,8 @@ public class WhattaPlayer extends G1Player implements Player {
 			if (currentLetters.size() < 3 )	{
 				strategy = fewLettersStrategy;
 				logger.trace("Switching to FewLettersStrategy");
-			}
+			}*/
+			strategy = fewLettersStrategy;
 		}
 		
 		return strategy.getBid(bidLetter, currentLetters, stats, defenseFactor);

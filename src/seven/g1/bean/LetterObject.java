@@ -6,10 +6,15 @@ public class LetterObject extends Letter
 {
 	private double stats;
 	private int count;
-	public LetterObject(char c, int score, int count)
+	
+	private int bidCount;
+	private int bidTotal;
+	
+	public LetterObject(char c, int score, int count, int bidCount, int bidTotal)
 	{
 		super(c, score);
-		
+		this.bidCount = bidCount;
+		this.bidTotal = bidTotal;
 		this.count = count;
 	}
 	
@@ -26,6 +31,22 @@ public class LetterObject extends Letter
 
 	public void setCount(int count) {
 		this.count = count;
+	}
+
+	public int getBidCount() {
+		return bidCount;
+	}
+
+	public void setBidCount(int bidCount) {
+		this.bidCount = bidCount;
+	}
+
+	public int getBidTotal() {
+		return bidTotal;
+	}
+
+	public void setBidTotal(int bidTotal) {
+		this.bidTotal = bidTotal;
 	}
 	
 	
